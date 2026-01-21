@@ -1,3 +1,8 @@
+"""Frappe Uberdirect hooks."""
+
+from frappe_uberdirect.doc_events import custom_doc_events
+from frappe_uberdirect.api import api_routes
+
 app_name = "frappe_uberdirect"
 app_title = "Frappe Uberdirect"
 app_publisher = "Excel Technologies Limited"
@@ -132,34 +137,19 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+# API Routes
+# ---------------
+
+doc_events = {
+    **custom_doc_events,
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"frappe_uberdirect.tasks.all"
-# 	],
-# 	"daily": [
-# 		"frappe_uberdirect.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"frappe_uberdirect.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"frappe_uberdirect.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"frappe_uberdirect.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+    "all": ["frappe_uberdirect.utils.scheduler.process_scheduled_jobs"],
+}
 
 # Testing
 # -------
@@ -177,9 +167,9 @@ app_license = "mit"
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "frappe_uberdirect.event.get_events"
-# }
+override_whitelisted_methods = {
+    **api_routes,
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -249,4 +239,3 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

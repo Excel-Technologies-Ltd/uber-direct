@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-01-21 09:48:54.512246",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "details_section",
+  "delivery_quote_id",
+  "created",
+  "dropoff_eta",
+  "duration",
+  "fee",
+  "column_break_drob",
+  "expires",
+  "currency_type",
+  "currency",
+  "dropoff_deadline",
+  "pickup_duration"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "delivery_quote_id",
+   "fieldtype": "Data",
+   "label": "Delivery Quote ID"
+  },
+  {
+   "fieldname": "created",
+   "fieldtype": "Datetime",
+   "label": "Created"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "dropoff_eta",
+   "fieldtype": "Datetime",
+   "label": "Dropoff ETA"
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Duration",
+   "label": "After Pickup Duration"
+  },
+  {
+   "fieldname": "fee",
+   "fieldtype": "Currency",
+   "label": "Fee"
+  },
+  {
+   "fieldname": "column_break_drob",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "expires",
+   "fieldtype": "Datetime",
+   "label": "Expires"
+  },
+  {
+   "fieldname": "currency_type",
+   "fieldtype": "Data",
+   "label": "Currency Type"
+  },
+  {
+   "fieldname": "dropoff_deadline",
+   "fieldtype": "Datetime",
+   "label": "Dropoff Deadline"
+  },
+  {
+   "fieldname": "pickup_duration",
+   "fieldtype": "Duration",
+   "label": "Pickup Duration"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-21 12:49:02.927595",
+ "modified_by": "Administrator",
+ "module": "Frappe Uberdirect",
+ "name": "Delivery Quote",
+ "naming_rule": "Random",
+ "owner": "azmin@excelbd.com",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
