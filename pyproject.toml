@@ -4,7 +4,7 @@ authors = [
     { name = "Excel Technologies Limited", email = "anamul.dev@excelbd.com"}
 ]
 description = "This app is for integrating uberdirect with frappe apps"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -21,7 +21,7 @@ build-backend = "flit_core.buildapi"
 
 [tool.ruff]
 line-length = 110
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [
