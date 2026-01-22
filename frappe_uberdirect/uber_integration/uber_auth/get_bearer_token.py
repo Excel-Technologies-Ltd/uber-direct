@@ -59,7 +59,7 @@ def get_bearer_token_from_cache(customer_id: str):
     client ID and client secret configured in the Frappe site configuration.
     """
     cache_key = prepare_cache_key(customer_id)
-    return frappe.cache.get_value(cache_key)
+    return frappe.cache().get_value(cache_key)
 
 
 def put_bearer_token_in_cache(customer_id: str, bearer_token: str, expires_in: int):
@@ -75,7 +75,7 @@ def put_bearer_token_in_cache(customer_id: str, bearer_token: str, expires_in: i
     """
     cache_key = prepare_cache_key(customer_id)
     expires_in_seconds = int(expires_in)
-    frappe.cache.set_value(cache_key, bearer_token, expires_in_sec=expires_in_seconds)
+    frappe.cache().set_value(cache_key, bearer_token, expires_in_sec=expires_in_seconds)
 
 
 def prepare_cache_key(customer_id: str):
