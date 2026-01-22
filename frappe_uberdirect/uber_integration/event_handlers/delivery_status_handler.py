@@ -9,7 +9,30 @@ def delivery_status_handler(payload: dict) -> None:
     if not delivery_id:
         frappe.throw("Delivery ID is required")
 
-    # get the delivery
-    delivery = frappe.get_doc("Delivery", delivery_id)
+    # get the delivery doc
+    delivery_status = payload.get("status", None)
+    delivery = frappe.get_doc("ArcPOS Delivery", {"delivery_id": delivery_id})
     if not delivery:
         frappe.throw("Delivery not found")
+
+    # update the delivery doc
+    delivery.status = delivery_status
+    delivery.save(ignore_permissions=True)
+
+    # update the sales invoice doc
+
+    map_status = {
+        "delivered": "Delivered",
+        "pickup_complete": "Handover to Delivery",
+        "dropoff": "On the Way",
+    }
+    if delivery_status in map_status:
+        invoice_doc = frappe.get_doc("Sales Invoice", delivery.order_no)
+        if invoice_doc:
+            invoice_doc.custom_order_status = map_status[delivery_status]
+            invoice_doc.save(ignore_permissions=True)
+
+    # log the event
+    frappe.logger(module="frappe_uberdirect", with_more_info=True).info(
+        f"Delivery status updated successfully for delivery {delivery_id} to {delivery.status}"
+    )

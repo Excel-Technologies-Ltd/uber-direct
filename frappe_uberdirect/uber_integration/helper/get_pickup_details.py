@@ -40,7 +40,7 @@ def get_pickup_details():
     # validate and set contact number
     for contact in outlet.get("custom_contact_numbers", []):
         if contact.is_primary_phone or contact.is_primary_mobile_no:
-            pickup_details["phone_number"] = contact.phone_number
+            pickup_details["phone_number"] = contact.phone
             break
 
     if not pickup_details["phone_number"]:

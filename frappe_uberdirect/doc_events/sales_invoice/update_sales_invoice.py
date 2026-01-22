@@ -12,7 +12,6 @@ def update_sales_invoice(doc, method):
     """
     Update sales invoice document events.
     """
-    frappe.msgprint(f"Update sales invoice: {doc.name}")
 
     # if service type is not Delivery, return
     if doc.custom_service_type != "Delivery":
