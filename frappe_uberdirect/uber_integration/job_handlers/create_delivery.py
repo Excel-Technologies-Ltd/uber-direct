@@ -64,7 +64,7 @@ def _prepare_dropoff_details(sales_invoice) -> dict:
     dropoff_details = {"address": dropoff_address, "name": None, "phone_number": None}
 
     # get and validte default customer
-    default_customer = frappe.get_single_value("ArcPOS Settings", "customer")
+    default_customer = frappe.db.get_single_value("ArcPOS Settings", "customer")
     if not default_customer:
         msg = "Default customer is not set in the ArcPOS Settings."
         frappe.throw(msg=msg, exc=frappe.ValidationError)

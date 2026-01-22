@@ -6,7 +6,7 @@ def get_pickup_details():
     """Get the pickup details for the delivery."""
 
     # get arcpos settings
-    default_outlet = frappe.get_single_value("ArcPOS Settings", "default_outlet")
+    default_outlet = frappe.db.get_single_value("ArcPOS Settings", "default_outlet")
     if not default_outlet:
         frappe.throw("Default outlet is not set. Please set it in the ArcPOS Settings.")
 
