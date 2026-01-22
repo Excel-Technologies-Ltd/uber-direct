@@ -18,7 +18,7 @@ def update_sales_invoice(doc, method):
         return
 
     # if order status is not Accepted, return
-    if doc.custom_order_status != "Accepted":
+    if doc.custom_order_status != "In kitchen":
         return
 
     # this is a delivery order, so we need to start delivery proccess
