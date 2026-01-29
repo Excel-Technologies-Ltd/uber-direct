@@ -151,7 +151,6 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "manifest_reference": invoice.name,
         "manifest_total_value": int(invoice.total * 100),
         "idempotency_key": f"delivery_{invoice.name}",
-        "test_specifications": {"robo_courier_specification": {"mode": "auto"}},
     }
 
     # add robo test in developmer mode
