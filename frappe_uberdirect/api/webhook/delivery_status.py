@@ -10,6 +10,8 @@ from .helper.get_webhook_secret import get_webhook_secret
 def delivery_status_webhook() -> dict:
     """Delivery status webhook to update the delivery status in the ERPNext."""
 
+    print("Delivery status webhook received")
+
     # Verify signature FIRST
     secret = get_webhook_secret(kind="delivery_status")
     verify_uber_webhook(secret=secret)
