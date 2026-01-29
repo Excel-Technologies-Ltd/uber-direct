@@ -167,8 +167,8 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "dropoff_deadline_dt",
     ]
     for field in window_fields:
-        value = getattr(invoice, field)
-        if value:
+        value = invoice.get(field, None)
+        if value is not None:
             delivery_payload[field] = value
 
     # set delivery quote
