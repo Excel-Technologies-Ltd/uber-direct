@@ -98,6 +98,9 @@ def _prepare_dropoff_details(sales_invoice) -> dict:
 def create_delivery_handler(invoice_id: str) -> dict:
     """Create a delivery for an order through the Uber Direct integration."""
 
+    # environment
+    is_development = frappe.conf.get("developer_mode", 0)
+
     # get and validate the sales invoice
     invoice = frappe.get_doc("Sales Invoice", invoice_id)
     if not invoice:
@@ -114,7 +117,6 @@ def create_delivery_handler(invoice_id: str) -> dict:
             {
                 "name": item.item_name,
                 "quantity": int(item.qty),
-                # "unit_of_measurement": item.uom,
                 "price": int(item.rate * 100),  # Convert to cents (integer)
             }
         )
@@ -143,14 +145,33 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "pickup_address": json.dumps(pickup_details["address"]),
         "pickup_name": pickup_details["name"],
         "pickup_phone_number": pickup_details["phone_number"],
+        "pickup_business_name": "BanCan Kitchen",
         # items
         "manifest_items": fmt_items,
         "manifest_reference": invoice.name,
         "manifest_total_value": int(invoice.total * 100),
-        "test_specifications": {"robo_courier_specification": {"mode": "auto"}},
+        "idempotency_key": f"delivery_{invoice.name}",
     }
 
-    # set delivery quote (only if not expired)
+    # add robo test in developmer mode
+    if is_development:
+        delivery_payload["test_specifications"] = {
+            "robo_courier_specification": {"mode": "auto"}
+        }
+
+    # set delivery window
+    window_fields = [
+        "pickup_ready_dt",
+        "pickup_deadline_dt",
+        "dropoff_ready_dt",
+        "dropoff_deadline_dt",
+    ]
+    for field in window_fields:
+        value = getattr(invoice, field)
+        if value:
+            delivery_payload[field] = value
+
+    # set delivery quote
     quote_id = _get_valid_quote_id(invoice)
     if quote_id:
         delivery_payload["quote_id"] = quote_id

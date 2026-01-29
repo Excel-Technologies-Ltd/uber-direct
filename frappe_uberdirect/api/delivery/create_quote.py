@@ -3,11 +3,14 @@
 This module provides the API endpoint for creating quotes
 through the Uber Direct integration.
 """
+
 import json
 
 import frappe
 from frappe_uberdirect.uber_integration import create_quote
-from frappe_uberdirect.uber_integration.helper.get_pickup_address import get_pickup_address
+from frappe_uberdirect.uber_integration.helper.get_pickup_address import (
+    get_pickup_address,
+)
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
@@ -23,7 +26,14 @@ def create_quote_api() -> dict:
         frappe.throw("All address fields are required")
 
     # optional fields
-    optional_fields = ["pickup_ready_dt", "dropoff_phone_number", "manifest_total_value"]
+    optional_fields = [
+        "pickup_ready_dt",
+        "pickup_deadline_dt",
+        "dropoff_ready_dt",
+        "dropoff_deadline_dt",
+        "dropoff_phone_number",
+        "manifest_total_value",
+    ]
     opt_dict = {}
     for field in optional_fields:
         value = frappe.form_dict.get(field, None)
@@ -35,7 +45,6 @@ def create_quote_api() -> dict:
     if not all(pickup_address.values()):
         frappe.throw("Please set the pickup address in the ArcPOS Settings.")
 
-    
     # prepare payload for making quote
     quote_data = {
         "pickup_address": json.dumps(pickup_address),
@@ -44,9 +53,8 @@ def create_quote_api() -> dict:
     }
 
     print(quote_data)
-   
+
     # create the quote
     result = create_quote(payload=quote_data)
-    
 
     return result
