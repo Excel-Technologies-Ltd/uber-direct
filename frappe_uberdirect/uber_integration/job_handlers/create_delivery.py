@@ -99,7 +99,7 @@ def create_delivery_handler(invoice_id: str) -> dict:
     """Create a delivery for an order through the Uber Direct integration."""
 
     # environment
-    is_development = frappe.conf.get("developer_mode", 0)
+    is_development = frappe.conf.get("environment", None) == "development"
 
     # get and validate the sales invoice
     invoice = frappe.get_doc("Sales Invoice", invoice_id)
