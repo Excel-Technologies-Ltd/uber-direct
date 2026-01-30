@@ -17,7 +17,7 @@ def get_bearer_token():
     url = frappe.conf.get("uberdirect_oauth_url")
     client_id = frappe.conf.get("uberdirect_client_id")
     client_secret = frappe.conf.get("uberdirect_client_secret")
-    customer_id = frappe.conf.get("customer_id")
+    customer_id = frappe.conf.get("uberdirect_customer_id")
 
     url = f"{url}/oauth/v2/token"
 
