@@ -151,7 +151,12 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "manifest_reference": invoice.name,
         "manifest_total_value": int(invoice.total * 100),
         "idempotency_key": f"delivery_{invoice.name}",
+        "pickup_notes": "Bring your hot bag to collect the food",
     }
+
+    # add drop off intructions
+    if invoice.custom_address_instruction:
+        delivery_payload["dropoff_notes"] = invoice.custom_address_instruction
 
     # add robo test in developmer mode
     if is_development:
@@ -210,6 +215,14 @@ def create_delivery_handler(invoice_id: str) -> dict:
     print(delivery_data)
     delivery_record = frappe.get_doc({"doctype": "ArcPOS Delivery", **delivery_data})
     delivery_record.insert(ignore_permissions=True)
+
+    # update the tracking url to sales invoice
+    try:
+        invoice.custom_rider_tracking_url = response.get("tracking_url", "")
+        invoice.save(ignore_permissions=True)
+    except Exception as e:
+        msg = f"Error updating tracking url to sales invoice: {e}"
+        frappe.log_error("Error updating tracking url to sales invoice", msg)
 
     # return the response
     return response
