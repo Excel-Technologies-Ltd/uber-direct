@@ -165,16 +165,15 @@ def create_delivery_handler(invoice_id: str) -> dict:
         }
 
     # set delivery window
-    window_fields = [
-        "pickup_ready_dt",
-        "pickup_deadline_dt",
-        "dropoff_ready_dt",
-        "dropoff_deadline_dt",
-    ]
-    for field in window_fields:
-        value = invoice.get(field, None)
-        if value is not None:
-            delivery_payload[field] = value
+    window_fields_map = {
+        "custom_pickup_ready": "pickup_ready_dt",
+        "custom_pickup_deadline": "pickup_deadline_dt",
+        "custom_dropoff_ready": "dropoff_ready_dt",
+        "custom_dropoff_deadline": "dropoff_deadline_dt",
+    }
+    for field, value in window_fields_map.items():
+        if invoice.get(field, None) is not None:
+            delivery_payload[value] = invoice.get(field, None)
 
     # set delivery quote
     quote_id = _get_valid_quote_id(invoice)
