@@ -215,10 +215,15 @@ def create_delivery_handler(invoice_id: str) -> dict:
     delivery_record = frappe.get_doc({"doctype": "ArcPOS Delivery", **delivery_data})
     delivery_record.insert(ignore_permissions=True)
 
-    # update the tracking url to sales invoice
+    # update the tracking url to sales invoice (use db.set_value to avoid modified-doc conflict)
     try:
-        invoice.custom_rider_tracking_url = response.get("tracking_url", "")
-        invoice.save(ignore_permissions=True)
+        frappe.db.set_value(
+            "Sales Invoice",
+            invoice.name,
+            "custom_rider_tracking_url",
+            response.get("tracking_url", ""),
+        )
+        frappe.db.commit()
     except Exception as e:
         msg = f"Error updating tracking url to sales invoice: {e}"
         frappe.log_error("Error updating tracking url to sales invoice", msg)
