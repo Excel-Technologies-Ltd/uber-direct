@@ -65,12 +65,14 @@ def _prepare_dropoff_details(sales_invoice) -> dict:
 
     # get and validte default customer
     default_customer = frappe.db.get_single_value("ArcPOS Settings", "customer")
-    if not default_customer:
+    d_website_customer = frappe.db.get_single_value("ArcPOS Settings", "default_customer_website")
+
+    if not default_customer or not d_website_customer:
         msg = "Default customer is not set in the ArcPOS Settings."
         frappe.throw(msg=msg, exc=frappe.ValidationError)
 
     # if invoice create on behalf of default customer
-    if default_customer == sales_invoice.customer:
+    if sales_invoice.customer in [default_customer, d_website_customer]:
         # set customer details
         dropoff_details["name"] = getattr(sales_invoice, "custom_customer_full_name")
         dropoff_details["phone_number"] = getattr(sales_invoice, "custom_mobile_no")
@@ -230,12 +232,3 @@ def create_delivery_handler(invoice_id: str) -> dict:
 
     # return the response
     return response
-
-
-# calculate the delay time to cancel the delivery
-def _calculate_delay_time(delivery_payload: dict) -> int:
-    """Calculate the delay time to cancel the delivery."""
-
-    # get the delay time
-    delay_time = delivery_payload["delay_time"]
-    return delay_time
