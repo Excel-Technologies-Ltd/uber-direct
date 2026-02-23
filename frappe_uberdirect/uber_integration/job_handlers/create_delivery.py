@@ -65,7 +65,9 @@ def _prepare_dropoff_details(sales_invoice) -> dict:
 
     # get and validte default customer
     default_customer = frappe.db.get_single_value("ArcPOS Settings", "customer")
-    d_website_customer = frappe.db.get_single_value("ArcPOS Settings", "default_customer_website")
+    d_website_customer = frappe.db.get_single_value(
+        "ArcPOS Settings", "default_customer_website"
+    )
 
     if not default_customer or not d_website_customer:
         msg = "Default customer is not set in the ArcPOS Settings."
@@ -211,6 +213,7 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "tracking_url": response.get("tracking_url", ""),
         "uuid": response.get("uuid", ""),
         "batch_id": response.get("batch_id", ""),
+        "custom_raw_response": json.dumps(response),
     }
 
     print(delivery_data)
