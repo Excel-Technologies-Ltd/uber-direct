@@ -1,4 +1,6 @@
 import json
+import time
+
 import frappe
 from frappe.utils import now_datetime, get_datetime
 from excel_restaurant_pos.shared.contacts import get_customer_phones
@@ -16,7 +18,7 @@ def _get_valid_quote_id(sales_invoice) -> str | None:
     Returns:
         str | None: Quote ID if valid and not expired, None otherwise
     """
-    if not sales_invoice.get("custom_quotes") or len(sales_invoice.custom_quotes) == 0:
+    if not sales_invoice.get("custom_quotes", None):
         return None
 
     quote = sales_invoice.custom_quotes[0]
@@ -99,6 +101,16 @@ def _prepare_dropoff_details(sales_invoice) -> dict:
     return dropoff_details
 
 
+def _update_invoice_fields(invoice_id: str, fields: dict) -> None:
+    """Update the fields of the sales invoice."""
+    try:
+        frappe.db.set_value("Sales Invoice", invoice_id, fields)
+        frappe.db.commit()
+    except Exception as e:
+        msg = f"Error updating invoice fields {fields} for invoice {invoice_id}: {e}"
+        frappe.log_error(msg, "Uber Direct Create Delivery")
+
+
 def create_delivery_handler(invoice_id: str) -> dict:
     """Create a delivery for an order through the Uber Direct integration."""
 
@@ -127,17 +139,6 @@ def create_delivery_handler(invoice_id: str) -> dict:
 
     # prepare the dropoff details
     dropoff_details = _prepare_dropoff_details(sales_invoice=invoice)
-
-    # find the first quote for the invoice
-    if not invoice.custom_quotes or len(invoice.custom_quotes) == 0:
-        msg = f"No quote found for invoice {invoice.name}."
-        frappe.throw(msg=msg, exc=frappe.ValidationError)
-
-    # get the first quote
-    quote = invoice.custom_quotes[0]
-    if not quote:
-        msg = f"No quote found for invoice {invoice.name}."
-        frappe.throw(msg=msg, exc=frappe.ValidationError)
 
     # prepare the delivery payload
     delivery_payload = {
@@ -183,14 +184,35 @@ def create_delivery_handler(invoice_id: str) -> dict:
     quote_id = _get_valid_quote_id(invoice)
     if quote_id:
         delivery_payload["quote_id"] = quote_id
+    else:
+        delivery_payload["pickup_ready_dt"] = now_datetime().isoformat()
 
-    # create the delivery
-    response = create_delivery(payload=delivery_payload)
+    # create the delivery (retry up to 3 times with exponential backoff)
+    max_retries = 3
+    delay = 2
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = create_delivery(payload=delivery_payload)
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay *= 2
+                msg = f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. Retrying in {delay}s."
+                frappe.log_error(msg, "Uber Direct Create Delivery")
+                time.sleep(delay)
+            else:
+                msg = f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. No more retries."
+                frappe.log_error(msg, "Uber Direct Create Delivery")
+                _update_invoice_fields(
+                    invoice_id=invoice.name,
+                    fields={
+                        "custom_delivery_partner_status": "Failed to Create Delivery"
+                    },
+                )
+                raise
 
-    print(response)
-
-    # create the delivery record in the db
-    # Safely get nested courier data (handle None values)
+    # get nested courier data (handle None values)
     courier = response.get("courier") or {}
     if not isinstance(courier, dict):
         courier = {}
@@ -216,22 +238,18 @@ def create_delivery_handler(invoice_id: str) -> dict:
         "custom_raw_response": json.dumps(response),
     }
 
-    print(delivery_data)
+    # create the delivery record in the db
     delivery_record = frappe.get_doc({"doctype": "ArcPOS Delivery", **delivery_data})
     delivery_record.insert(ignore_permissions=True)
 
-    # update the tracking url to sales invoice (use db.set_value to avoid modified-doc conflict)
-    try:
-        frappe.db.set_value(
-            "Sales Invoice",
-            invoice.name,
-            "custom_rider_tracking_url",
-            response.get("tracking_url", ""),
-        )
-        frappe.db.commit()
-    except Exception as e:
-        msg = f"Error updating tracking url to sales invoice: {e}"
-        frappe.log_error("Error updating tracking url to sales invoice", msg)
+    # update the tracking url to sales invoice
+    _update_invoice_fields(
+        invoice_id=invoice.name,
+        fields={
+            "custom_rider_tracking_url": response.get("tracking_url", ""),
+            "custom_delivery_partner_status": "Delivery Created",
+        },
+    )
 
     # return the response
     return response
