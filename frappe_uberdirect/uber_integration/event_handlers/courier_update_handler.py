@@ -37,5 +37,5 @@ def courier_update_handler(payload: dict) -> None:
     delivery.save(ignore_permissions=True)
 
     # log the event
-    msg = f"Courier details updated for delivery {delivery_id} successfully"
+    msg = f"Courier details updated for delivery {delivery_id}"
     frappe.log_success(msg, "Uber Direct Courier Update")
