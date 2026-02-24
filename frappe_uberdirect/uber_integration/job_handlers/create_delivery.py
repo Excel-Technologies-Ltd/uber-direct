@@ -111,7 +111,7 @@ def _update_invoice_fields(invoice_id: str, fields: dict) -> None:
         frappe.log_error(msg, "Uber Direct Create Delivery")
 
 
-def create_delivery_handler(invoice_id: str) -> dict:
+def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
     """Create a delivery for an order through the Uber Direct integration."""
 
     # environment
@@ -188,7 +188,7 @@ def create_delivery_handler(invoice_id: str) -> dict:
         delivery_payload["pickup_ready_dt"] = now_datetime().isoformat()
 
     # create the delivery (retry up to 3 times with exponential backoff)
-    max_retries = 3
+    max_retries = 3 if retry else 1
     delay = 2
     response = None
     for attempt in range(max_retries):

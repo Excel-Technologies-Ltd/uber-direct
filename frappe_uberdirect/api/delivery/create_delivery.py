@@ -17,7 +17,7 @@ def create_delivery_api() -> dict:
     if not invoice_id:
         frappe.throw("Invoice ID is required")
 
-    delivery_payload = create_delivery_handler(invoice_id=invoice_id)
+    delivery_payload = create_delivery_handler(invoice_id=invoice_id, retry=False)
 
     return {
         "message": "Delivery created successfully",
