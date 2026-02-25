@@ -2,7 +2,12 @@ import json
 import time
 
 import frappe
-from frappe.utils import now_datetime, get_datetime
+from frappe.utils import (
+    get_datetime,
+    get_datetime_in_timezone,
+    get_system_timezone,
+    now_datetime,
+)
 from excel_restaurant_pos.shared.contacts import get_customer_phones
 from ..helper import get_pickup_details
 from frappe_uberdirect.uber_integration.create_delivery import create_delivery
@@ -184,8 +189,9 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
     quote_id = _get_valid_quote_id(invoice)
     if quote_id:
         delivery_payload["quote_id"] = quote_id
-    else:
-        delivery_payload["pickup_ready_dt"] = now_datetime().isoformat()
+    # else:
+    #     tz = get_system_timezone()
+    #     delivery_payload["pickup_ready_dt"] = get_datetime_in_timezone(tz).isoformat()
 
     # create the delivery (retry up to 3 times with exponential backoff)
     max_retries = 3 if retry else 1
