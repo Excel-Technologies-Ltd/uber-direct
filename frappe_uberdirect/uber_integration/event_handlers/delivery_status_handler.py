@@ -25,11 +25,21 @@ def delivery_status_handler(payload: dict) -> None:
         "delivered": "Delivered",
         "pickup_complete": "Handover to Delivery",
         "dropoff": "On the Way",
+        "canceled": "Ready to Deliver",
     }
+
+    partner_map = {
+        "delivered": "Delivered",
+        "pickup_complete": "Rider on Delivery",
+        "dropoff": "Rider on Delivery",
+        "canceled": "Cancelled from Marchant",
+    }
+
     if delivery_status in map_status:
         invoice_doc = frappe.get_doc("Sales Invoice", delivery.order_no)
         if invoice_doc:
             invoice_doc.custom_order_status = map_status[delivery_status]
+            invoice_doc.custom_delivery_partner_status = partner_map[delivery_status]
             invoice_doc.save(ignore_permissions=True)
 
     # log the event
