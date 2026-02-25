@@ -2,12 +2,7 @@ import json
 import time
 
 import frappe
-from frappe.utils import (
-    get_datetime,
-    get_datetime_in_timezone,
-    get_system_timezone,
-    now_datetime,
-)
+from frappe.utils import get_datetime, now_datetime
 from excel_restaurant_pos.shared.contacts import get_customer_phones
 from ..helper import get_pickup_details
 from frappe_uberdirect.uber_integration.create_delivery import create_delivery
@@ -189,34 +184,44 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
     quote_id = _get_valid_quote_id(invoice)
     if quote_id:
         delivery_payload["quote_id"] = quote_id
-    # else:
-    #     tz = get_system_timezone()
-    #     delivery_payload["pickup_ready_dt"] = get_datetime_in_timezone(tz).isoformat()
 
     # create the delivery (retry up to 3 times with exponential backoff)
     max_retries = 3 if retry else 1
-    delay = 2
+    backoff_seconds = 2
     response = None
+    last_error = None
+
     for attempt in range(max_retries):
         try:
             response = create_delivery(payload=delivery_payload)
             break
         except Exception as e:
-            if attempt < max_retries - 1:
-                delay *= 2
-                msg = f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. Retrying in {delay}s."
-                frappe.log_error(msg, "Uber Direct Create Delivery")
-                time.sleep(delay)
-            else:
-                msg = f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. No more retries."
-                frappe.log_error(msg, "Uber Direct Create Delivery")
+            last_error = e
+            is_last_attempt = attempt == max_retries - 1
+            action = (
+                "No more retries."
+                if is_last_attempt
+                else f"Retrying in {backoff_seconds}s."
+            )
+            frappe.log_error(
+                f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. {action}",
+                "Uber Direct Create Delivery",
+            )
+
+            if is_last_attempt:
                 _update_invoice_fields(
                     invoice_id=invoice.name,
                     fields={
                         "custom_delivery_partner_status": "Failed to Create Delivery"
                     },
                 )
-                raise
+            else:
+                time.sleep(backoff_seconds)
+                backoff_seconds *= 2
+
+    # if no response, raise the last error
+    if response is None:
+        raise last_error
 
     # get nested courier data (handle None values)
     courier = response.get("courier") or {}
