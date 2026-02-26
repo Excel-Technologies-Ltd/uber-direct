@@ -40,6 +40,9 @@ def delivery_status_handler(payload: dict) -> None:
         if invoice_doc:
             invoice_doc.custom_order_status = map_status[delivery_status]
             invoice_doc.custom_delivery_partner_status = partner_map[delivery_status]
+            if delivery_status == "delivered":
+                for item in invoice_doc.items:
+                    item.custom_order_item_status = "Delivered"
             invoice_doc.save(ignore_permissions=True)
 
     # log the event
