@@ -29,8 +29,5 @@ def create_delivery(payload: dict = None) -> dict:
         msg = f"Failed to create delivery. Status code: {response.status_code}. Response: {response.text}"
         frappe.throw(msg=msg, exc=frappe.ValidationError)
 
-    # manually create error
-    frappe.throw(msg="Manual error", exc=frappe.ValidationError)
-
     # return response
     return response.json()
