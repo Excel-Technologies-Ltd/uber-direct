@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import timedelta
 
 import frappe
 from frappe.utils import get_datetime, now_datetime
@@ -34,11 +35,12 @@ def _get_valid_quote_id(sales_invoice) -> str | None:
     expires_dt = get_datetime(expires) if isinstance(expires, str) else expires
     current_dt = now_datetime()
 
-    # If quote has expired, return None
-    if expires_dt and expires_dt < current_dt:
+    # Consider expired if past expiry or within 3 minutes of expiry time
+    buffer = timedelta(minutes=3)
+    if expires_dt and (expires_dt < current_dt or current_dt >= expires_dt - buffer):
         frappe.log_error(
-            f"Quote {quote_id} has expired. Expires: {expires_dt}, Current: {current_dt}",
             "Delivery Quote Expired",
+            f"Quote {quote_id} has expired. Expires: {expires_dt}, Current: {current_dt}",
         )
         return None
 
@@ -108,7 +110,7 @@ def _update_invoice_fields(invoice_id: str, fields: dict) -> None:
         frappe.db.commit()
     except Exception as e:
         msg = f"Error updating invoice fields {fields} for invoice {invoice_id}: {e}"
-        frappe.log_error(msg, "Uber Direct Create Delivery")
+        frappe.log_error("Uber Direct Create Delivery", msg)
 
 
 def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
@@ -182,7 +184,7 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
 
     # set delivery quote
     quote_id = _get_valid_quote_id(invoice)
-    if quote_id:
+    if quote_id and retry:
         delivery_payload["quote_id"] = quote_id
 
     # create the delivery (retry up to 3 times with exponential backoff)
@@ -204,8 +206,8 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
                 else f"Retrying in {backoff_seconds}s."
             )
             frappe.log_error(
-                title="Uber Direct Create Delivery",
-                message=f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. {action}",
+                "Uber Direct Create Delivery",
+                f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. {action}",
             )
 
             if is_last_attempt:
@@ -250,8 +252,14 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
     }
 
     # create the delivery record in the db
-    delivery_record = frappe.get_doc({"doctype": "ArcPOS Delivery", **delivery_data})
-    delivery_record.insert(ignore_permissions=True)
+    try:
+        delivery_record = frappe.get_doc(
+            {"doctype": "ArcPOS Delivery", **delivery_data}
+        )
+        delivery_record.insert(ignore_permissions=True)
+    except Exception as e:
+        msg = f"Error creating delivery record for invoice {invoice.name}: {e}"
+        frappe.log_error("Uber Direct Create Delivery", msg)
 
     # update the tracking url to sales invoice
     _update_invoice_fields(

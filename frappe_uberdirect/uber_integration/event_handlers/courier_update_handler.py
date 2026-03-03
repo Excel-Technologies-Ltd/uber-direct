@@ -13,14 +13,14 @@ def courier_update_handler(payload: dict) -> None:
     delivery = frappe.get_doc("ArcPOS Delivery", {"delivery_id": delivery_id})
     if not delivery:
         msg = f"Delivery not found for delivery {delivery_id}"
-        frappe.log_error(msg, "Uber Direct Courier Update")
+        frappe.log_error("Uber Direct Courier Update", msg)
         return
 
     # get the courier details from the payload
     courier_details = payload.get("data", {}).get("courier", None)
     if not courier_details:
         msg = f"Courier details are required for delivery {delivery_id}"
-        frappe.log_error(msg, "Uber Direct Courier Update")
+        frappe.log_error("Uber Direct Courier Update", msg)
         return
 
     # update the courier details
