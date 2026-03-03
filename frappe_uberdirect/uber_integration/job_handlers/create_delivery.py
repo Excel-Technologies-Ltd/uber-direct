@@ -204,8 +204,8 @@ def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
                 else f"Retrying in {backoff_seconds}s."
             )
             frappe.log_error(
-                f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. {action}",
-                "Uber Direct Create Delivery",
+                title="Uber Direct Create Delivery",
+                message=f"Uber Direct API attempt {attempt + 1}/{max_retries} failed: {e}. {action}",
             )
 
             if is_last_attempt:
