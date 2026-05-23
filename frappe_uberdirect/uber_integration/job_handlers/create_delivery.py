@@ -8,6 +8,8 @@ from excel_restaurant_pos.shared.contacts import get_customer_phones
 from ..helper import get_pickup_details
 from frappe_uberdirect.uber_integration.create_delivery import create_delivery
 
+IS_RETURN_FROM_HANDLER = True
+
 
 def _get_valid_quote_id(sales_invoice) -> str | None:
     """
@@ -115,6 +117,13 @@ def _update_invoice_fields(invoice_id: str, fields: dict) -> None:
 
 def create_delivery_handler(invoice_id: str, retry: bool = True) -> dict:
     """Create a delivery for an order through the Uber Direct integration."""
+
+    # don't need to create delivery for now
+    if IS_RETURN_FROM_HANDLER:
+        return {
+            "message": "Return from delivery handler",
+            "delivery_payload": None,
+        }
 
     # environment
     is_development = frappe.conf.get("environment", None) == "development"
